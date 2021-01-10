@@ -1,6 +1,5 @@
 import asyncio
 
-from services.mlflow import MLFlow
 from services.torch_model import COVIDModel
 from services.settings import (
     MLFLOW_ENABLED, MLFLOW_TRACKING_SERVER,
@@ -31,6 +30,7 @@ for kernel_sizes, activation_function in grid_search():
     list_loss = model.train()
 
     if MLFLOW_ENABLED:
+        from services.mlflow import MLFlow
         model_id = f'{activation_function}/{kernel_sizes}'
         mlflow = MLFlow()
         mlflow.setup_mlflow(mlflow_server=MLFLOW_TRACKING_SERVER,
