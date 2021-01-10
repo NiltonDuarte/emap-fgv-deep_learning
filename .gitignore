@@ -1,6 +1,7 @@
 #local env setup
 gitignore*
 dataset/
+mlruns/
 
 # Mac
 .DS_Store
