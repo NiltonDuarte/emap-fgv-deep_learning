@@ -5,7 +5,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import Dataset, DataLoader, random_split, SubsetRandomSampler
 
 
-def get_linear_in_features(image_size, kernel_sizes, stride_sizes=(1, 1, 1), padding_sizes=(2, 2, 2), pooling_sizes=(2, 2, 2)):
+def get_image_size(image_size, kernel_sizes, stride_sizes=(1, 1, 1), padding_sizes=(2, 2, 2), pooling_sizes=(2, 2, 2)):
     for index in range(len(kernel_sizes)):
         kernel_size = kernel_sizes[index]
         stride_size = stride_sizes[index]
@@ -36,9 +36,9 @@ class CNN(nn.Module):
                       kernel_size=kernel_sizes[2], stride=1, padding=2),
             activation_function(),
             nn.MaxPool2d(2, 2))
-        in_features = get_linear_in_features(256, kernel_sizes)
+        image_size = get_image_size(256, kernel_sizes)
         self.fc = nn.Linear(
-            in_features=in_features * in_features * 32,
+            in_features=image_size * image_size * 32,
             out_features=num_classes)
 
     def forward(self, x):
