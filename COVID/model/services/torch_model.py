@@ -105,5 +105,5 @@ class COVIDModel:
                     print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                           .format(epoch + 1, num_epochs, i + 1, total_step, loss.item()))
 
-            print('Finished Training')
+            print('warning: Finished Training at first epoch')
             return list_loss
