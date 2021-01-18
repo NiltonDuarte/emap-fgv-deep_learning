@@ -17,29 +17,57 @@ from services.settings import (
 
 
 def grid_search():
-    for kernel_sizes in [(7, 5, 3), (5, 5, 3), (3, 3, 3)]:
+    for trial in range(3):
         for activation_function in ['Tanh', 'ReLU']:
-            yield kernel_sizes, activation_function
+            for regularization_strategy in ['without', 'BatchNorm2d', 'Dropout']:
+                for kernel_sizes in [(7, 5, 3), (5, 5, 3), (3, 3, 3)]:
+                    yield activation_function, regularization_strategy, kernel_sizes, trial
 
 
-for kernel_sizes, activation_function in grid_search():
+index = -1
+# change this to skip some trials
+skip_trials = 0
+for activation_function, regularization_strategy, kernel_sizes, trial in grid_search():
+    index += 1
+    if index < skip_trials:
+        print(
+            f'Skipping {activation_function} / {kernel_sizes} / {regularization_strategy}')
+        continue
     model = COVIDModel(
         activation_function=activation_function,
+        regularization_strategy=regularization_strategy,
         kernel_sizes=kernel_sizes)
     model.load_images(DATA_FOLDER)
-    list_loss = model.train()
+    list_loss = model.train(num_epochs=4)
+    eval_metrics = model.get_eval_metrics()
+    test_metrics = model.get_test_metrics()
+    # Test the model
 
     if MLFLOW_ENABLED:
         from services.mlflow import MLFlow
-        model_id = f'{activation_function}/{kernel_sizes}'
+        model_id = f'{activation_function}/{kernel_sizes}/{regularization_strategy}/{trial}'
         mlflow = MLFlow()
         mlflow.setup_mlflow(mlflow_server=MLFLOW_TRACKING_SERVER,
                             mlflow_experiment_name='emap_dl', model_id=model_id)
 
         async def log_and_finish(list_loss):
             await mlflow.async_log('params', {'activation_function': activation_function,
-                                              'kernel_sizes': kernel_sizes})
-            await mlflow.async_log('metrics', list_loss, prefix='training_')
+                                              'kernel_sizes': kernel_sizes,
+                                              'regularization_strategy': regularization_strategy})
+            await mlflow.async_log('metrics', list_loss, prefix='training.')
+            await mlflow.async_log('metrics', eval_metrics,
+                                   prefix='eval.')
+            await mlflow.async_log('metrics', test_metrics,
+                                   prefix='test.')
             await mlflow.end_run()
 
         asyncio.run(log_and_finish(list_loss))
+    else:
+        print('****************')
+        print('* EVAL METRICS *')
+        print('****************')
+        print(eval_metrics)
+        print('****************')
+        print('* TEST METRICS *')
+        print('****************')
+        print(test_metrics)
